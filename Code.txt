@@ -1,0 +1,82 @@
+1.
+SELECT day, production
+FROM daily_totals
+WHERE production > (
+        SELECT AVG(production)
+        FROM daily_totals
+ )
+ORDER BY production DESC;
+
+2. 
+SELECT d.day, d.energy_purchased, w.description AS weather
+FROM daily_totals d
+JOIN weather w 
+ON d.day = w.day
+WHERE w.description = 'sunny' AND d.energy_purchased >= 1
+ORDER BY d.energy_purchased DESC;
+
+3. 
+SELECT day, 'feed in' AS type, grid_feed_in AS amount
+FROM daily_totals
+WHERE grid_feed_in > 10
+
+UNION
+
+SELECT day, 'purchased' AS type, energy_purchased AS amount
+FROM daily_totals
+WHERE energy_purchased > 10
+ORDER BY type ASC, amount DESC;
+
+4.
+SELECT w.description AS weather, ROUND(AVG(l.soc), 2) AS avg_soc
+FROM live_stats l
+JOIN weather w ON DATE(l.timestamp) = w.day
+GROUP BY w.description
+ORDER BY avg_soc DESC;
+
+5.
+SELECT d.day, d.consumption, w.description AS weather
+FROM daily_totals d
+LEFT JOIN weather w 
+ON d.day = w.day
+WHERE d.consumption > 25
+ORDER BY w.description ASC;
+
+6.
+SELECT ROUND(AVG(soc), 2) AS avg_nighttime_soc
+FROM live_stats l
+JOIN sunlight s ON DATE(l.timestamp) = s.day
+WHERE TIME(l.timestamp) < s.sunrise OR TIME(l.timestamp) > s.sunset;
+
+7.
+SELECT w.description AS weather, ROUND(AVG(d.production), 2) AS avg_production
+FROM daily_totals d
+JOIN weather w 
+ON d.day = w.day
+GROUP BY w.description
+ORDER BY avg_production DESC;
+
+8.
+CREATE PROCEDURE DailySolarSummary(IN input_date DATE)
+SELECT d.day, d.production, d.consumption, d.energy_purchased, d.grid_feed_in, 
+       w.description AS weather, 
+       ROUND(s.seconds_sunlight / 60, 0) AS sunlight_minutes
+FROM daily_totals d
+LEFT JOIN weather w ON d.day = w.day
+LEFT JOIN sunlight s ON d.day = s.day
+WHERE d.day = input_date;
+
+CALL DailySolarSummary('2025-01-01');
+
+9.
+SELECT DATE(timestamp) AS day, COUNT(*) * 5 AS minutes_sold_to_grid
+FROM live_stats
+WHERE grid_power < 0
+GROUP BY DATE(timestamp)
+ORDER BY day ASC;
+
+10.
+SELECT day, charging_energy, discharging_energy
+FROM daily_totals
+WHERE (charging_energy + discharging_energy) >= 20
+ORDER BY day ASC;
