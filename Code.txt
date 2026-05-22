@@ -1,4 +1,4 @@
-1.
+1. Using the daily totals, list each day that the solar production was greater than average and the amount of production that day. Sort your results by production from high to low.
 SELECT day, production
 FROM daily_totals
 WHERE production > (
@@ -6,16 +6,18 @@ WHERE production > (
         FROM daily_totals
  )
 ORDER BY production DESC;
+______________________________________________________________________________________________________________________________________________________
 
-2. 
+2. Using the daily totals, list each day, the amount of energy purchased that day, and a description of the weather for all sunny days that had at least 1 kilowatt hour of energy purchased. Sort your results by energy purchased in descending order.
 SELECT d.day, d.energy_purchased, w.description AS weather
 FROM daily_totals d
 JOIN weather w 
 ON d.day = w.day
 WHERE w.description = 'sunny' AND d.energy_purchased >= 1
 ORDER BY d.energy_purchased DESC;
+____________________________________________________________________________________________________________________________________________________________
 
-3. 
+3. Using the daily totals, find each day that the system either had over 10 kilowatt hours of grid feed in or had over 10 kilowatt hours of energy purchase. Display three columns: the day, the type (either “feed in” or “purchased”), and the amount of energy. Order your results by type in ascending order, then by amount in descending order.
 SELECT day, 'feed in' AS type, grid_feed_in AS amount
 FROM daily_totals
 WHERE grid_feed_in > 10
@@ -26,37 +28,42 @@ SELECT day, 'purchased' AS type, energy_purchased AS amount
 FROM daily_totals
 WHERE energy_purchased > 10
 ORDER BY type ASC, amount DESC;
+____________________________________________________________________________________________________________________________________________________________
 
-4.
+4. Using the live stats, calculate the average battery charge (SOC) for each type of weather. Round your answers to 2 decimal places. Sort your results by average charge in descending order.
 SELECT w.description AS weather, ROUND(AVG(l.soc), 2) AS avg_soc
 FROM live_stats l
 JOIN weather w ON DATE(l.timestamp) = w.day
 GROUP BY w.description
 ORDER BY avg_soc DESC;
+____________________________________________________________________________________________________________________________________________________________
 
-5.
+5. Using the daily totals, list all days with over 25 kilowatt hours of consumption and the associated weather description. Include days in your result even if there is no matching weather description for that day. Sort your results by the weather description in ascending order.
 SELECT d.day, d.consumption, w.description AS weather
 FROM daily_totals d
 LEFT JOIN weather w 
 ON d.day = w.day
 WHERE d.consumption > 25
 ORDER BY w.description ASC;
+____________________________________________________________________________________________________________________________________________________________
 
-6.
+6. Using the live stats, calculate the average battery charge (SOC) during nighttime hours. You may assume that it is nighttime whenever the time is not between sunrise and sunset. Round your answer to 2 decimal places.
 SELECT ROUND(AVG(soc), 2) AS avg_nighttime_soc
 FROM live_stats l
 JOIN sunlight s ON DATE(l.timestamp) = s.day
 WHERE TIME(l.timestamp) < s.sunrise OR TIME(l.timestamp) > s.sunset;
+____________________________________________________________________________________________________________________________________________________________
 
-7.
+7. Using the daily totals, calculate the average energy production for each type of weather. Round your answers to 2 decimal places. Sort your results by average production in descending order.
 SELECT w.description AS weather, ROUND(AVG(d.production), 2) AS avg_production
 FROM daily_totals d
 JOIN weather w 
 ON d.day = w.day
 GROUP BY w.description
 ORDER BY avg_production DESC;
+____________________________________________________________________________________________________________________________________________________________
 
-8.
+8. Create a stored procedure called DailySolarSummary that accepts a single date parameter (e.g., “2025-01-01”) and outputs a summary of the system’s performance that day using the daily totals. This should include total production, total consumption, energy purchased, grid feed in, weather description, and number of sunlight minutes.
 CREATE PROCEDURE DailySolarSummary(IN input_date DATE)
 SELECT d.day, d.production, d.consumption, d.energy_purchased, d.grid_feed_in, 
        w.description AS weather, 
@@ -68,15 +75,19 @@ WHERE d.day = input_date;
 
 CALL DailySolarSummary('2025-01-01');
 
-9.
+____________________________________________________________________________________________________________________________________________________________
+
+9. Using the live stats, list each day alongside the number of minutes that day that energy was sold back to the power grid (that is, grid power less than zero). You may assume that each reading represents 5 minutes of time, so the number of minutes is the count multiplied by 5. Order your results by day in ascending order. 
 SELECT DATE(timestamp) AS day, COUNT(*) * 5 AS minutes_sold_to_grid
 FROM live_stats
 WHERE grid_power < 0
 GROUP BY DATE(timestamp)
 ORDER BY day ASC;
+____________________________________________________________________________________________________________________________________________________________
 
-10.
+10. Using the daily totals, list each day, the charging energy, and the discharging energy for days that had at least 20 kilowatt hours of total battery activity (charging + discharging). Order your results by day in ascending order.
 SELECT day, charging_energy, discharging_energy
 FROM daily_totals
 WHERE (charging_energy + discharging_energy) >= 20
 ORDER BY day ASC;
+____________________________________________________________________________________________________________________________________________________________
